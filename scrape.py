@@ -98,6 +98,10 @@ if __name__ == '__main__':
     to_search = to_search.drop(columns=['_merge', 'join_key'])
 
     with tqdm(total=len(to_search)) as pbar:
+        completed_url = None
         for _, (url, crawl) in to_search[['bio_url','crawl']].iterrows():
-            completed = scrape_crawl(crawl, url)
-            pbar.update(completed)
+            if not url == completed_url:
+                completed = scrape_crawl(crawl, url)
+                pbar.update(completed)
+            if completed > 1:
+                completed_url = url
