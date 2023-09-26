@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 def load_crawls_to_search():
     save_path = os.path.join('processed_data','completed_searches.csv')
     if os.path.exists(save_path):
-        completed_searches = pd.read_csv(save_path, header=None)
+        completed_searches = pd.read_csv(save_path, header=None, names=['url', 'crawl'])
     else:
         completed_searches = pd.DataFrame(columns=['url', 'crawl'])
     return completed_searches
@@ -28,27 +28,35 @@ def read_url_data():
 
 
 def save_htmls(htmls, url, crawl):
-    if not os.path.exists('htmls'):
-        os.mkdir('htmls')
-    if not os.path.exists(os.path.join('htmls', crawl)):
-        os.mkdir(os.path.join('htmls', crawl))
-    if not os.path.exists(os.path.join('htmls', crawl, url)):
-        os.mkdir(os.path.join('htmls', crawl, url))
-    for i, html in enumerate(htmls):
-        with open(os.path.join('htmls', crawl, url, f'{i}.html'), 'wb') as f:
-            f.write(html)
+    new_row = pd.DataFrame({'url': url, 'crawl': crawl, 'html':htmls})
+    save_path = os.path.join('processed_data','htmls.csv')
+    if not os.path.exists(save_path):
+        new_row.to_csv(save_path, index=False)
+    else:
+        with open(save_path, 'a') as f:
+            new_row.to_csv(f, header=False, index=False)
 
-def log_completed_crawl(url, crawl):
-    with open(os.path.join('processed_data','completed_searches.csv'), 'a') as f:
-        f.write(f'{url},{crawl}\n')
+def log_completed_crawl(url, crawl, was_successful):
+    if not was_successful:
+        with open(os.path.join('processed_data','completed_searches.csv'), 'a') as f:
+            f.write(f'{url},{crawl}\n')
+        return 1
+    else:
+        all_crawls = pd.read_csv(os.path.join('input_data', 'crawl_list.csv'), header=None)
+        all_crawls.columns = ['crawl']
+        crawl_iloc = all_crawls[all_crawls['crawl'] == crawl].index[0]
+        all_crawls = all_crawls.iloc[crawl_iloc:]
+        for crawl in all_crawls['crawl']:
+            with open(os.path.join('processed_data','completed_searches.csv'), 'a') as f:
+                f.write(f'{url},{crawl}\n')
+        return len(all_crawls)
 
-def scape_crawl(crawl, url):
+def scrape_crawl(crawl, url):
     encoded_url = urllib.parse.quote(url, safe='')
     resp = requests.get(
         f'http://index.commoncrawl.org/{crawl}-index?url={encoded_url}&output=json')
     if resp.status_code != 200:
-        log_completed_crawl(url, crawl)
-        return None
+        return log_completed_crawl(url, crawl, was_successful=False)
     pages = [json.loads(x) for x in resp.content.decode('utf-8').strip().split('\n')]
 
     htmls = []
@@ -63,7 +71,7 @@ def scape_crawl(crawl, url):
             for record in warcio.ArchiveIterator(stream):
                 htmls.append(record.content_stream().read())
     save_htmls(htmls, url, crawl)
-    log_completed_crawl(url, crawl)
+    return log_completed_crawl(url, crawl, was_successful=True)
 
 
 
@@ -91,5 +99,5 @@ if __name__ == '__main__':
 
     with tqdm(total=len(to_search)) as pbar:
         for _, (url, crawl) in to_search[['bio_url','crawl']].iterrows():
-            scape_crawl(crawl, url)
-            pbar.update(1)
+            completed = scrape_crawl(crawl, url)
+            pbar.update(completed)
