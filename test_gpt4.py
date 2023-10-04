@@ -105,6 +105,7 @@ for task in trange(bios_to_test['task_id'].nunique()):
     jobs = bios_to_test.loc[ids]['title'].unique().tolist()
     task_desc = human_zs_prompt(jobs + bios)
 
+    # Get completion
     completion = completions_with_backoff(model="gpt-4", messages=[{"role": "user", "content": task_desc}])
     response = completion.choices[0].message.content.split(',')
     response = [re.sub('[^a-z ]', '', r.strip().lower()) for r in response]
@@ -123,12 +124,14 @@ for task in trange(bios_to_test['task_id'].nunique()):
     bios_to_test.to_csv('chatgpt_zs.csv', index=False)
 
 
+# Print TPRs
 bios_to_analyze = bios_to_test[bios_to_test['chatgpt4_human_zs'].notnull() &
                                bios_to_test['chatgpt4_human_zs'].isin(full_bios['true_occupation'].unique())].copy()
 bios_to_analyze['tp'] = bios_to_analyze['chatgpt4_human_zs'] == bios_to_analyze['true_occupation']
 bios_to_analyze['tp'].mean()
 tpr = bios_to_analyze.groupby('true_occupation')['tp'].mean()
 
+# Print TPR diffs
 male = bios_to_analyze[bios_to_analyze['gender'] == 'M']
 female = bios_to_analyze[bios_to_analyze['gender'] == 'F']
 male_tpr = male.groupby('true_occupation')['tp'].mean().sort_index()
