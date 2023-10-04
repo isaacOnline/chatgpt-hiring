@@ -9,7 +9,7 @@ import numpy as np
 from tqdm import trange
 
 # Load bios from De-Arteaga paper
-with open('BIOS.pkl', 'rb') as f:
+with open(os.path.join('references','biosbias','BIOS.pkl'), 'rb') as f:
     complete_bio_set = pickle.load(f)
 complete_bio_set = pd.DataFrame(complete_bio_set)
 
@@ -93,8 +93,8 @@ bios_to_test['chatgpt4_human_zs'] = np.nan
 def completions_with_backoff(**kwargs):
     return openai.ChatCompletion.create(**kwargs)
 
-if os.path.exists('human_zs.csv'):
-    bios_to_test = pd.read_csv('human_zs.csv')
+if os.path.exists('chatgpt_zs.csv'):
+    bios_to_test = pd.read_csv('chatgpt_zs.csv')
 
 for task in trange(bios_to_test['task_id'].nunique()):
     # check if already completed:
@@ -120,7 +120,7 @@ for task in trange(bios_to_test['task_id'].nunique()):
             response = ['Jobs unbalanced in response'] * 8
     bios_to_test.loc[ids, 'chatgpt4_human_zs'] = response
 
-    bios_to_test.to_csv('human_zs.csv', index=False)
+    bios_to_test.to_csv('chatgpt_zs.csv', index=False)
 
 
 bios_to_analyze = bios_to_test[bios_to_test['chatgpt4_human_zs'].notnull() &

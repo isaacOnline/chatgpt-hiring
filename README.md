@@ -1,6 +1,5 @@
-# Hiring Data Scraping
-This repo contains code for scraping hiring data for the hiring profiles in the paper 
-["Investigations of Performance and Bias in Human-AI Teamwork in Hiring"](https://arxiv.org/abs/2202.11812)
+# ChatGPT Hiring
+This repository contains code for testing ChatGPT using the HybridHiring dataset
 
 ## Usage
 * The directory `hybridhiring` can be downloaded from [here](https://www.microsoft.com/en-us/download/details.aspx?id=105296) 
