@@ -1,31 +1,16 @@
-name: hiringScraper
+name: hybridHiring
 channels:
   - conda-forge
   - defaults
   - pytorch
 dependencies:
   - python=3.8
-  - beautifulsoup4
   - pandas
   - pip
   - openpyxl
   - pip:
-      - boto3
-      - click
-      - huggingface-hub
-      - jinja2
-      - networkx
       - openai
-      - py4j
-      - pyspark
-      - regex
-      - requests
-      - spacy
-      - spacy-transformers
-      - torch
+      - pebble
       - tqdm
-      - transformers
-      - typing-extensions
-      - urllib3
       - warcio
-      # will need to install english pipelines: `python -m spacy download en_core_web_trf`
+      - backoff
